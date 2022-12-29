@@ -1,0 +1,4 @@
+[project]
+name = "closer_in_time"
+version = "0.1.0"
+description = "A GUI to see whether an event is closer in time to another event than it is to today."

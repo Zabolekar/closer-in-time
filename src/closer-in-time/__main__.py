@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 import datetime as dt
 from typing import Dict
 from contextlib import contextmanager
