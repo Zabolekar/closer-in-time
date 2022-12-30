@@ -17,10 +17,11 @@ KEY_TO_DELTA: Dict[str, int] = {
 
 class Column(Frame):
 
-    def __init__(self, parent, *, label):
+    def __init__(self, parent, *, name, label, rb_variable, incremented):
         super().__init__(parent, border=5)
-        
-        self.name = label # won't work if labels are equal
+
+        self.name = name
+        self.incremented = incremented
 
         self._lab = Label(self, text=label)
         self._lab.pack()
@@ -31,25 +32,18 @@ class Column(Frame):
         self.date = dt.date.today()
 
         self._rb = Radiobutton(self, text="Fix",
-                                     variable=parent.fixed_column_name,
+                                     variable=rb_variable,
                                      value=self.name)
         self._rb.pack()
-        
-        parent.fixed_column_name.trace("w", self.on_fix_or_unfix)
-        self.parent = parent
-
-
-    def fix(self) -> None:
-        self.parent.fixed_column_name.set(self.name)
-
-
-    def on_fix_or_unfix(self, *args) -> None:
-        self._entry["state"] = "disabled" if self.fixed else "normal"
 
 
     @property
     def fixed(self) -> bool:
-        return self.parent.fixed_column_name.get() == self.name
+        return self._entry["state"] == "disabled"
+
+    @fixed.setter
+    def fixed(self, value: bool) -> None:
+        self._entry["state"] = "disabled" if value else "normal"
 
 
     @property
@@ -57,58 +51,27 @@ class Column(Frame):
         representation: str = self._entry.get()
         return dt.datetime.strptime(representation, DATE_FORMAT)
 
-
     @date.setter
     def date(self, value: dt.datetime) -> None:
         representation: str = value.strftime(DATE_FORMAT)
-        self._entry.delete(0, "end")
-        self._entry.insert(0, representation)
+        with self.temporarily_normal():
+            self._entry.delete(0, "end")
+            self._entry.insert(0, representation)
 
 
-    def flash_red(self):
+    def flash_red(self) -> None:
         self._entry.config(foreground="red")
-        self.parent.after(100, lambda: self._entry.config(foreground=""))
-        
-
-    def enforce_consistency(self) -> None:
-        """
-        Enforces that the equality b = (a+c)/2 holds,
-        and that a <= b <= c holds,
-        and that the fixed value is not changed
-        (unless it would block other values from changing),
-        and that the diff label is up to date
-        """
-        diff: dt.timedelta
-        a, b, c = self.parent.columns
-        if not a.fixed and self is not a:
-            diff = c.date - b.date
-            a.date = b.date - diff
-        elif not b.fixed and self is not b:
-            diff = (c.date - a.date)/2
-            b.date = a.date + diff
-        elif not c.fixed and self is not c:
-            diff = b.date - a.date
-            c.date = b.date + diff
-        self.parent.diff_label["text"] = f"Δ = {diff.days}"
-
-        if diff.days < 0:
-            # Change the fixed value. It's an abnormal situation,
-            # so we flash the value to get the user's attention.
-            self.parent.fixed_column.flash_red()
-            self.parent.reset_columns(self.date) # resets diff_label, too
+        self.after(100, lambda: self._entry.config(foreground=""))
 
 
     def on_key(self, event) -> str:
-
         try:
             delta = dt.timedelta(KEY_TO_DELTA[event.keysym])
-            self.date += delta
-            self.enforce_consistency()
+            self.incremented(self.name, delta)
         except KeyError:
             print(f"Key {event.keysym} is not a recognized command")
-        
         return "break" # to stop event propagation
-        
+
 
     @contextmanager
     def temporarily_normal(self):
