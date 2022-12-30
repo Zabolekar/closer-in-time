@@ -19,7 +19,7 @@ KEY_TO_DELTA: Dict[str, int] = {
 class Column(Frame):
 
     def __init__(self, parent, *, name, label, rb_variable, incremented):
-        super().__init__(parent, border=5)
+        super().__init__(parent)
 
         self.name = name
         self.incremented = incremented

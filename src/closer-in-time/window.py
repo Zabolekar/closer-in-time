@@ -2,15 +2,16 @@ from .column import Column
 from .model import Model, WhichDate
 import datetime as dt
 from tkinter import Tk, StringVar
-from tkinter.ttk import Label, Button
+from tkinter.ttk import Label, Button, Frame
 
 
-HOWTO = """
-Click on an entry and use ↑ and ↓ to increment or decrement by one day,
-→ and ← to increment or decrement by 30 days,
-+ and - to increment or decrement by 365 days,
-PgUp and PgDn to increment or decrement by 3650 days
-"""
+HOWTO = """Click on an entry and use
+    ↑ and ↓ to increment or decrement by one day,
+    → and ← to increment or decrement by 30 days,
+    + and - to increment or decrement by 365 days,
+    PgUp and PgDn to increment or decrement by 3650 days"""
+
+PADDING = 5
 
 
 class Window(Tk):
@@ -25,32 +26,36 @@ class Window(Tk):
         self.fixed_column_name = StringVar()
         self.fixed_column_name.trace_add("write", self.on_fixed_changed)
 
-        self._howto_label = Label(self, justify="center",
-                                        text=HOWTO, relief="ridge")
+        self._window_frame = Frame(self)
+        self._window_frame.pack(fill="both", padx=PADDING, pady=PADDING)
 
-        a = Column(self, name="a", label="a = b - Δ",
-                         rb_variable = self.fixed_column_name,
-                         incremented=self.on_date_incremented)
-        b = Column(self, name="b", label="b = (a+c)/2",
-                         rb_variable = self.fixed_column_name,
-                         incremented=self.on_date_incremented)
-        c = Column(self, name="c", label="c = b + Δ",
-                         rb_variable = self.fixed_column_name,
-                         incremented=self.on_date_incremented)
+        self._howto_label = Label(self._window_frame, text=HOWTO)
+
+        self._column_frame = Frame(self._window_frame)
+
+        a = Column(self._column_frame, name="a", label="a = b − Δ",
+                   rb_variable = self.fixed_column_name,
+                   incremented=self.on_date_incremented)
+        b = Column(self._column_frame, name="b", label="b = (a + c) / 2",
+                   rb_variable = self.fixed_column_name,
+                   incremented=self.on_date_incremented)
+        c = Column(self._column_frame, name="c", label="c = b + Δ",
+                   rb_variable = self.fixed_column_name,
+                   incremented=self.on_date_incremented)
         self.columns = (a, b, c)
 
-        self.diff_label = Label(self, justify="center", text="Δ = 0")
-
-        self._reset_button = Button(self, text="Reset",
-                                          command=self.model.reset_to_today)
-
-        self._howto_label.pack()
-
         for column in self.columns:
-            column.pack(side="left")
+            column.pack(side="left", padx=PADDING)
 
-        self.diff_label.pack(side="bottom", before=a)
-        self._reset_button.pack(side="bottom", fill="x", before=self.diff_label)
+        self.diff_label = Label(self._window_frame, justify="center", text="Δ = 0")
+
+        self._reset_button = Button(self._window_frame, text="Reset",
+                                    command=self.model.reset_to_today)
+
+        self._howto_label.pack(fill="x", padx=PADDING, pady=PADDING)
+        self._column_frame.pack()
+        self.diff_label.pack(padx=PADDING, pady=PADDING)
+        self._reset_button.pack(fill="x", padx=PADDING, pady=PADDING)
 
         self.update()
 
