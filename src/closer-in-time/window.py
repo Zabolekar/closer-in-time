@@ -50,7 +50,7 @@ class Window(Tk):
         self.diff_label = Label(self._window_frame, justify="center", text="Δ = 0")
 
         self._reset_button = Button(self._window_frame, text="Reset",
-                                    command=self.model.reset_to_today)
+                                    command=self.on_reset_clicked)
 
         self._howto_label.pack(fill="x", padx=PADDING, pady=PADDING)
         self._column_frame.pack()
@@ -67,6 +67,11 @@ class Window(Tk):
 
     def on_fixed_changed(self, *args):
         self.model.fixed_date = self.fixed_column_name.get()
+        self.update()
+
+
+    def on_reset_clicked(self):
+        self.model.reset_to_today()
         self.update()
 
 
