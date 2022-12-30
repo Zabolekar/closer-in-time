@@ -10,7 +10,8 @@ DATE_FORMAT = "%d.%m.%Y"
 KEY_TO_DELTA: Dict[str, int] = {
     "Up": 1, "Down": -1,
     "Right": 30, "Left": -30,
-    "plus": 365, "minus": -365,
+    "plus": 365, "equal": 365, "KP_Add": 365,
+    "minus": -365, "KP_Subtract": -365,
     "Prior": 3650, "Next": -3650
 }
 
