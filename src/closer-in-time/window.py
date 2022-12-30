@@ -4,12 +4,11 @@ from tkinter import Tk, StringVar
 from tkinter.ttk import Label, Button
 
 
-HOWTO = """
-Click on an entry and use ↑ and ↓ to increment or decrement by one day,
-→ and ← to increment or decrement by 30 days,
-+ and - to increment or decrement by 365 days,
-PgUp and PgDn to increment or decrement by 3650 days
-"""
+HOWTO = """Click on an entry and use
+    ↑ and ↓ to increment or decrement by one day,
+    → and ← to increment or decrement by 30 days,
+    + and - to increment or decrement by 365 days,
+    PgUp and PgDn to increment or decrement by 3650 days"""
 
 
 class Window(Tk):
@@ -25,8 +24,8 @@ class Window(Tk):
         self._howto_label = Label(self, justify="center",
                                         text=HOWTO, relief="ridge")
         
-        a = Column(self, label="a = b - Δ")
-        b = Column(self, label="b = (a+c)/2")
+        a = Column(self, label="a = b − Δ")
+        b = Column(self, label="b = (a + c) / 2")
         c = Column(self, label="c = b + Δ")
         self.columns = (a, b, c)
         

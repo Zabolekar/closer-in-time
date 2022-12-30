@@ -16,7 +16,6 @@ KEY_TO_DELTA: Dict[str, int] = {
 
 
 class Column(Frame):
-
     def __init__(self, parent, *, label):
         super().__init__(parent, border=5)
         
