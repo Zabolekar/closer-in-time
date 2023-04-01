@@ -31,5 +31,18 @@ create the environment manually *before* installing the package.
 # Usage
 
 ```sh
-python3 -m closer-in-time
+python -m closer-in-time
 ```
+
+# Mac OS X Leopard Port
+
+There is a port for Mac OS X Leopard where installing a newer Python version with tkinter is not trivial. It uses Python 2.5, and also slightly different keys (⌥Dn ⌥Up instead of PgDn PgUp). It doesn't support years before 1900. Use it like this:
+
+```sh
+git clone https://github.com/Zabolekar/closer-in-time
+cd closer-in-time
+git switch python2.5
+python src/closer-in-time/__main__.py
+```
+
+![Screenshot](screenshot_mac.png)
