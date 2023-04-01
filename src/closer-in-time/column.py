@@ -1,23 +1,25 @@
+# -*- coding: utf-8
 import datetime as dt
-from typing import Dict
-from contextlib import contextmanager
-from tkinter.ttk import Frame, Label, Entry, Radiobutton
+from Tkinter import Frame, Label, Entry, Radiobutton
 
 
 DATE_FORMAT = "%d.%m.%Y"
 
 
-KEY_TO_DELTA: Dict[str, int] = {
+KEY_TO_DELTA = {
     "Up": 1, "Down": -1,
     "Right": 30, "Left": -30,
-    "plus": 365, "KP_Add": 365, "minus": -365, "KP_Subtract": -365,
-    "Prior": 3650, "Next": -3650
+    "plus": 365, "minus": -365
+}
+
+OPTION_AND_KEY_TO_DELTA = {
+    "Up": 3650, "Down": -3650
 }
 
 
 class Column(Frame):
-    def __init__(self, parent, *, label):
-        super().__init__(parent, border=5)
+    def __init__(self, parent, label):
+        Frame.__init__(self, parent, border=5)
         
         self.name = label # won't work if labels are equal
 
@@ -26,8 +28,9 @@ class Column(Frame):
 
         self._entry = Entry(self)
         self._entry.bind("<Key>", self.on_key)
+        self._entry.config(foreground="black")
         self._entry.pack()
-        self.date = dt.date.today()
+        self.set_date(dt.date.today())
 
         self._rb = Radiobutton(self, text="Fix",
                                      variable=parent.fixed_column_name,
@@ -38,38 +41,37 @@ class Column(Frame):
         self.parent = parent
 
 
-    def fix(self) -> None:
+    def fix(self):
         self.parent.fixed_column_name.set(self.name)
 
 
-    def on_fix_or_unfix(self, *args) -> None:
+    def on_fix_or_unfix(self, *args):
         self._entry["state"] = "disabled" if self.fixed else "normal"
 
 
     @property
-    def fixed(self) -> bool:
+    def fixed(self):
         return self.parent.fixed_column_name.get() == self.name
 
 
     @property
-    def date(self) -> dt.datetime:
-        representation: str = self._entry.get()
+    def date(self):
+        representation = self._entry.get()
         return dt.datetime.strptime(representation, DATE_FORMAT)
 
 
-    @date.setter
-    def date(self, value: dt.datetime) -> None:
-        representation: str = value.strftime(DATE_FORMAT)
+    def set_date(self, value):
+        representation = value.strftime(DATE_FORMAT)
         self._entry.delete(0, "end")
         self._entry.insert(0, representation)
 
 
-    def flash_red(self):
-        self._entry.config(foreground="red")
-        self.parent.after(100, lambda: self._entry.config(foreground=""))
-        
+    def flash_red(self):            
+        self._entry.config(state="normal", foreground="red")
+        self.parent.after(100, lambda: self._entry.config(state="disabled",
+                                                          foreground="black"))
 
-    def enforce_consistency(self) -> None:
+    def enforce_consistency(self):
         """
         Enforces that the equality b = (a+c)/2 holds,
         and that a <= b <= c holds,
@@ -77,18 +79,17 @@ class Column(Frame):
         (unless it would block other values from changing),
         and that the diff label is up to date
         """
-        diff: dt.timedelta
         a, b, c = self.parent.columns
         if not a.fixed and self is not a:
             diff = c.date - b.date
-            a.date = b.date - diff
+            a.set_date(b.date - diff)
         elif not b.fixed and self is not b:
-            diff = (c.date - a.date)/2
-            b.date = a.date + diff
+            diff = (c.date - a.date) / 2
+            b.set_date(a.date + diff)
         elif not c.fixed and self is not c:
             diff = b.date - a.date
-            c.date = b.date + diff
-        self.parent.diff_label["text"] = f"Δ = {diff.days}"
+            c.set_date(b.date + diff)
+        self.parent.diff_label["text"] = "Δ = %i" % diff.days
 
         if diff.days < 0:
             # Change the fixed value. It's an abnormal situation,
@@ -97,21 +98,35 @@ class Column(Frame):
             self.parent.reset_columns(self.date) # resets diff_label, too
 
 
-    def on_key(self, event) -> str:
+    def on_key(self, event):
+    
+        if event.keysym == "Meta_L":  # ⌥ key used by itself
+            return "break" # to stop event propagation
 
-        try:
-            delta = dt.timedelta(KEY_TO_DELTA[event.keysym])
-            self.date += delta
+        delta = None
+
+        if event.state == 16: # ⌥ key used as modifier
+            try:
+                delta = dt.timedelta(OPTION_AND_KEY_TO_DELTA[event.keysym])
+            except KeyError:
+                print "Key combination ⌥ %s is not a recognized command" % event.keysym
+        else:
+            try:
+                delta = dt.timedelta(KEY_TO_DELTA[event.keysym])
+            except KeyError:
+                print "Key %s is not a recognized command" % event.keysym
+                
+        if delta is not None:
+            self.set_date(self.date + delta)
             self.enforce_consistency()
-        except KeyError:
-            print(f"Key {event.keysym} is not a recognized command")
         
         return "break" # to stop event propagation
         
 
-    @contextmanager
-    def temporarily_normal(self):
-        state = self._entry["state"]
+
+    def temporarily_normal_enter(self):
+        self._saved_state = self._entry["state"]
         self._entry["state"] = "normal"
-        yield
-        self._entry["state"] = state
+    
+    def temporarily_normal_exit(self):
+        self._entry["state"] = self._saved_state
